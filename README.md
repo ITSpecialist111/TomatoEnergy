@@ -11,8 +11,8 @@ Sensors
 1. ModBus Integration Sensor (kWh Calculation)
 Convert kW to kWh using the integration platform.
 
-yaml
-Copy code
+'''yaml
+
 sensor:
   - platform: integration
     source: sensor.modbus_grid_consumption
@@ -20,9 +20,9 @@ sensor:
     round: 3
 2. Projected Daily Cost Sensor
 Calculate the projected cost for the day based on current usage.
+'''
+'''yaml
 
-yaml
-Copy code
 template:
   - sensor:
       - name: "Projected Daily Cost"
@@ -38,8 +38,8 @@ template:
 3. Current Electricity Rate Sensor
 Dynamically determine the current electricity rate based on tariff times.
 
-yaml
-Copy code
+'''
+'''yaml
 template:
   - sensor:
       - name: "Current Electricity Rate Tomato"
@@ -65,7 +65,7 @@ Automations
 Automatically updates the tariff based on the current time.
 
 yaml
-Copy code
+
 alias: Update Electricity Tariff
 trigger:
   - platform: time_pattern
@@ -91,7 +91,7 @@ Helpers
 Track energy usage across different tariffs using sensor.modbus_gh_grid_consumption_kwh as the source.
 
 yaml
-Copy code
+
 utility_meter:
   electricity_usage:
     source: sensor.modbus_gh_grid_consumption_kwh
@@ -105,7 +105,7 @@ Dashboard Configuration
 Below is the complete YAML configuration for the Electricity Dashboard:
 
 yaml
-Copy code
+
 views:
   - title: Electricity Dashboard
     path: electricity-dashboard
@@ -239,6 +239,8 @@ views:
                 - Off Peak
                 - Drop Rate
                 - Peak
+               
+
 Feel free to copy this document into your GitHub repository. Let me know if you need any additional refinements! 😊
 
 
