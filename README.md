@@ -1,28 +1,27 @@
-# TomatoEnergy
-This is configuration for Home Assistant and Tomato Energy. There's no APIs today but fixed tariffs. Once billed there are CSV's available for you to download from Tomato's "MyWatts" website to compare.
+TomatoEnergy Configuration for Home Assistant
+This repository provides a complete guide to setting up an Electricity Dashboard in Home Assistant for users of Tomato Energy. Since Tomato Energy doesn’t currently offer an API, this configuration enables effective monitoring of electricity tariffs and usage, especially for users with a CT clamp sensor (e.g., sensor.modbus_grid_consumption).
 
-This configuration assumes you have a CT clamp for monitoring power at the electric meter! In my config this is: sensor.modbus_grid_consumption 
-
-
-Home Assistant Electricity Dashboard
-This documentation provides a complete guide for setting up an Electricity Dashboard in Home Assistant. The setup includes sensors, automations, helpers, and a customizable dashboard to monitor electricity usage, costs, and tariffs.
-
+Features
+Monitor electricity usage and costs.
+Automatically switch tariffs based on time.
+Visualize energy consumption with graphs and gauges.
+Optimize usage for house batteries, EVs, and large appliances.
 Sensors
 1. ModBus Integration Sensor (kWh Calculation)
-Convert kW to kWh using the integration platform.
+Convert power from kW to kWh using the integration platform.
 
-'''yaml
-
+yaml
+Copy code
 sensor:
   - platform: integration
     source: sensor.modbus_grid_consumption
     name: ModBus GH Grid Consumption kWh
     round: 3
 2. Projected Daily Cost Sensor
-Calculate the projected cost for the day based on current usage.
-'''
-'''yaml
+Estimate daily electricity costs based on current usage.
 
+yaml
+Copy code
 template:
   - sensor:
       - name: "Projected Daily Cost"
@@ -36,10 +35,10 @@ template:
             0.00
           {% endif %}
 3. Current Electricity Rate Sensor
-Dynamically determine the current electricity rate based on tariff times.
+Automatically determine the current electricity rate based on time.
 
-'''
-'''yaml
+yaml
+Copy code
 template:
   - sensor:
       - name: "Current Electricity Rate Tomato"
@@ -62,10 +61,10 @@ template:
           {% endif %}
 Automations
 1. Tariff Switching Automation
-Automatically updates the tariff based on the current time.
+Automatically update the utility meter tariff based on the current time.
 
 yaml
-
+Copy code
 alias: Update Electricity Tariff
 trigger:
   - platform: time_pattern
@@ -91,7 +90,7 @@ Helpers
 Track energy usage across different tariffs using sensor.modbus_gh_grid_consumption_kwh as the source.
 
 yaml
-
+Copy code
 utility_meter:
   electricity_usage:
     source: sensor.modbus_gh_grid_consumption_kwh
@@ -101,11 +100,9 @@ utility_meter:
       - peak
       - drop_rate
 Dashboard
-Dashboard Configuration
-Below is the complete YAML configuration for the Electricity Dashboard:
-
+Complete Dashboard Configuration
 yaml
-
+Copy code
 views:
   - title: Electricity Dashboard
     path: electricity-dashboard
@@ -239,8 +236,4 @@ views:
                 - Off Peak
                 - Drop Rate
                 - Peak
-               
-
-Feel free to copy this document into your GitHub repository. Let me know if you need any additional refinements! 😊
-
-
+Feel free to copy this document into your GitHub repository. Let me know if you need additional refinements! 😊
