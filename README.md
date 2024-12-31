@@ -1,4 +1,5 @@
-TomatoEnergy Configuration for Home Assistant
+***TomatoEnergy Configuration for Home Assistant  - SWITCH TO CODE TAB!!! ***
+
 This repository provides a complete guide to setting up an Electricity Dashboard in Home Assistant for users of Tomato Energy. Since Tomato Energy doesn’t currently offer an API, this configuration enables effective monitoring of electricity tariffs and usage, especially for users with a CT clamp sensor (e.g., sensor.modbus_grid_consumption).
 
 Features
@@ -11,7 +12,7 @@ Sensors
 Convert power from kW to kWh using the integration platform.
 
 yaml
-Copy code
+
 sensor:
   - platform: integration
     source: sensor.modbus_grid_consumption
@@ -21,7 +22,7 @@ sensor:
 Estimate daily electricity costs based on current usage.
 
 yaml
-Copy code
+
 template:
   - sensor:
       - name: "Projected Daily Cost"
@@ -38,7 +39,7 @@ template:
 Automatically determine the current electricity rate based on time.
 
 yaml
-Copy code
+
 template:
   - sensor:
       - name: "Current Electricity Rate Tomato"
@@ -59,12 +60,14 @@ template:
           {% else %}
             {{ peak_rate }}
           {% endif %}
-Automations
+
+        
+***Automations***
 1. Tariff Switching Automation
 Automatically update the utility meter tariff based on the current time.
 
 yaml
-Copy code
+
 alias: Update Electricity Tariff
 trigger:
   - platform: time_pattern
@@ -85,12 +88,14 @@ action:
         {% else %}
           peak
         {% endif %}
-Helpers
+
+    
+***Helpers***
 1. Utility Meter Helpers
 Track energy usage across different tariffs using sensor.modbus_gh_grid_consumption_kwh as the source.
 
 yaml
-Copy code
+
 utility_meter:
   electricity_usage:
     source: sensor.modbus_gh_grid_consumption_kwh
@@ -99,10 +104,12 @@ utility_meter:
       - off_peak
       - peak
       - drop_rate
-Dashboard
+
+      
+***Dashboard***
 Complete Dashboard Configuration
 yaml
-Copy code
+
 views:
   - title: Electricity Dashboard
     path: electricity-dashboard
@@ -236,4 +243,7 @@ views:
                 - Off Peak
                 - Drop Rate
                 - Peak
-Feel free to copy this document into your GitHub repository. Let me know if you need additional refinements! 😊
+               
+
+
+***Feel free to copy this document into your GitHub repository. Let me know if you need additional refinements! 😊***
