@@ -1,0 +1,192 @@
+## Tomato Energy
+    - name: "Off Peak Energy Cost"
+      unit_of_measurement: "£"
+      state: >
+        {{ (states('sensor.electricity_usage_off_peak') | float * 0.0540) | round(2) }}
+
+    - name: "Drop Rate Energy Cost"
+      unit_of_measurement: "£"
+      state: >
+        {{ (states('sensor.electricity_usage_drop_rate') | float * 0.144) | round(2) }}
+
+    - name: "Peak Energy Cost"
+      unit_of_measurement: "£"
+      state: >
+        {{ (states('sensor.electricity_usage_peak') | float * 0.2431) | round(2) }}
+
+    - name: "Total Electricity Cost"
+      unit_of_measurement: "£"
+      state: >
+        {{ (states('sensor.off_peak_energy_cost') | float +
+            states('sensor.drop_rate_energy_cost') | float +
+            states('sensor.peak_energy_cost') | float) | round(2) }}
+
+    - name: "Current Electricity Rate Tomato"
+      unique_id: current_electricity_rate_tomato
+      unit_of_measurement: "p/kWh"
+      state: >
+        {% set off_peak_rate = 0.05004 %}
+        {% set drop_rate = 0.140427 %}
+        {% set peak_rate    = 0.243128 %}
+        {% set t = now().strftime("%H:%M") %}
+
+        {% if "00:00" <= t < "06:00" %}
+          {{ off_peak_rate }}
+        {% elif "06:00" <= t < "09:30" %}
+          {{ peak_rate }}
+        {% elif "09:30" <= t < "11:30" %}
+          {{ drop_rate }}
+        {% elif "11:30" <= t < "22:00" %}
+          {{ peak_rate }}
+        {% else %}
+          {{ drop_rate }}
+        {% endif %}
+
+    - name: "Yesterday's Electricity Cost"
+      unique_id: yesterdays_electricity_cost
+      unit_of_measurement: "£"
+      state: >
+        {% set start = (now() - timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0) %}
+        {% set end = start + timedelta(days=1) %}
+        {{ states('sensor.total_electricity_cost', start=start, end=end) | float | round(2) }}
+
+    - name: "Projected Daily Cost"
+      unit_of_measurement: "£"
+      state: >
+        {% set cost = states('sensor.total_electricity_cost') | float %}
+        {% set current_hour = now().hour | float %}
+        {% if current_hour > 0 %}
+          {{ ((cost / current_hour) * 24) | round(2) }}
+        {% else %}
+          0.00
+        {% endif %}
+        
+    - name: "Yesterday's Grid Consumption"
+      unit_of_measurement: "kWh"
+      state: >
+        {{ state_attr('sensor.modbus_gh_grid_consumption_kwh', 'last_period') | round(2) }}
+
+    - name: "Daily Standing Charge Cost"
+      unit_of_measurement: "£"
+      state: >
+        {{ (40.8155 / 100) | round(2) }}
+
+    - name: "Remaining Daily Energy Budget"
+      unit_of_measurement: "£"
+      state: >
+        {{ 5.00 - states('sensor.total_electricity_cost') | float | round(2) }}
+
+
+    # 1) Battery Time To Full (Solar Only)
+    - name: "Battery Time To Full (Solar Only)"
+      unit_of_measurement: "hours"
+      availability: >-
+        {% set bms_state = states('sensor.modbus_bms_kwh_remaining') %}
+        {% set pv_state = states('sensor.pv_power_modbus') %}
+        {{ bms_state not in ['unknown','unavailable','None'] and
+            pv_state not in ['unknown','unavailable','None'] }}
+      state: >-
+        {% set battery_remaining = states('sensor.modbus_bms_kwh_remaining') | float(0) %}
+        {% set total_capacity = 10 %}
+        {% set required_kwh = total_capacity - battery_remaining %}
+
+        {% set pv_kw = states('sensor.pv_power_modbus') | float(0) %}
+        
+        {% if pv_kw > 0 and required_kwh > 0 %}
+          {{ (required_kwh / pv_kw) | round(2) }}
+        {% else %}
+          0
+        {% endif %}
+
+    # 2) Battery Charge Status
+    - name: "Battery Charge Status"
+      icon: mdi:battery-charging
+      availability: >-
+        {% set charge_state = states('sensor.modbus_battery_charge') %}
+        {{ charge_state not in ['unknown','unavailable','None'] }}
+      state: >-
+        {% set charge_kw = states('sensor.modbus_battery_charge') | float(0) %}
+        {% if charge_kw > 0 %}
+          Charging
+        {% elif charge_kw < 0 %}
+          Discharging
+        {% else %}
+          Idle
+        {% endif %}
+
+    # 3) Battery Time To Full (All Sources)
+    - name: "Battery Time To Full (All Sources)"
+      unit_of_measurement: "hours"
+      availability: >-
+        {% set bms_state = states('sensor.modbus_bms_kwh_remaining') %}
+        {% set charge_state = states('sensor.modbus_battery_charge') %}
+        {% set pv_state = states('sensor.pv_power_modbus') %}
+        {{ bms_state not in ['unknown','unavailable','None'] and
+            charge_state not in ['unknown','unavailable','None'] and
+            pv_state not in ['unknown','unavailable','None'] }}
+      state: >-
+        {% set battery_remaining = states('sensor.modbus_bms_kwh_remaining') | float(0) %}
+        {% set total_capacity = 10 %}
+        {% set required_kwh = total_capacity - battery_remaining %}
+
+        {% set battery_charge_kw = states('sensor.modbus_battery_charge') | float(0) %}
+        {% set pv_kw = states('sensor.pv_power_modbus') | float(0) %}
+        {% set total_charge_kw = battery_charge_kw + pv_kw %}
+
+        {% if total_charge_kw > 0 and required_kwh > 0 %}
+          {{ (required_kwh / total_charge_kw) | round(2) }}
+        {% else %}
+          0
+        {% endif %}
+
+## End Tomato
+
+
+# Charge battery bayesian
+
+
+  - platform: bayesian
+    name: "Charge Home Battery"
+    prior: 0.5
+    probability_threshold: 0.75
+    observations:
+      # Electricity Rate
+      - platform: template
+        value_template: >
+          {% set rate = states('sensor.current_electricity_rate_tomato')|float %}
+          {{ 14.00 <= rate <= 14.05 }}
+        prob_given_true: 0.9
+        prob_given_false: 0.1
+
+      # Battery SOC
+      - platform: template
+        value_template: >
+          {% set battery_soc = states('sensor.battery_soc')|float %}
+          {{ battery_soc < 50 }}
+        prob_given_true: 0.95
+        prob_given_false: 0.05
+
+      # Battery Time to Full (Solar Only)
+      - platform: template
+        value_template: >
+          {% set time_to_full = states('sensor.battery_time_to_full_solar_only')|float %}
+          {{ time_to_full > 0 and time_to_full < 2 }}
+        prob_given_true: 0.8
+        prob_given_false: 0.2
+
+      # Time Within Drop Rate
+      - platform: template
+        value_template: >
+          {% set hour = now().hour %}
+          {% set minute = now().minute %}
+          {{ (9 <= hour < 11) or (hour == 11 and minute < 30) or (22 <= hour < 24) }}
+        prob_given_true: 0.85
+        prob_given_false: 0.15
+
+      # Predicted Solar Production
+      - platform: template
+        value_template: >
+          {% set predicted_solar = states('sensor.predicted_solar_production')|float %}
+          {{ predicted_solar < 2.0 }}
+        prob_given_true: 0.8
+        prob_given_false: 0.2
