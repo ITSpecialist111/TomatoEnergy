@@ -1,0 +1,30 @@
+alias: Turn Off Home Battery Charging Drop Rate Bayesian Sensor
+description: ""
+triggers:
+  - entity_id: binary_sensor.charge_home_battery
+    to: "off"
+    trigger: state
+conditions:
+  - condition: time
+    after: "06:00:00"
+    before: "23:00:00"
+actions:
+  - data:
+      inverter: b86d732fe09d1ff3f5472aa5c4582114
+      enable_force_charge: true
+      enable_charge_from_grid: false
+      start: "00:00:00"
+      end: "00:01:00"
+      charge_period: "0"
+    action: foxess_modbus.update_charge_period
+  - data:
+      message: Home battery charging stopped as indicated by the Bayesian sensor.
+    action: notify.notify
+  - target:
+      entity_id: tts.openai_tts_nova
+    data:
+      message: >-
+        Charging for the home battery has been turned off based on the Bayesian
+        decision.
+    action: tts.speak
+mode: single
