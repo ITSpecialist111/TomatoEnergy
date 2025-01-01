@@ -1,0 +1,20 @@
+alias: Update Electricity Tariff
+triggers:
+  - minutes: /5
+    trigger: time_pattern
+actions:
+  - data:
+      entity_id: select.electricity_usage
+      option: |
+        {% set t = now().strftime("%H:%M") %} {% if "00:00" <= t < "06:00" %}
+          Off_Peak
+        {% elif "06:00" <= t < "09:30" %}
+          Peak
+        {% elif "09:30" <= t < "11:30" %}
+          Drop_Rate
+        {% elif "11:30" <= t < "22:00" %}
+          Peak
+        {% else %}
+          Drop_Rate
+        {% endif %}
+    action: select.select_option
