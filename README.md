@@ -29,6 +29,7 @@ This repository contains the following files:
 * **Tariff Automation**: Automates tariff switching based on the time of day  https://github.com/ITSpecialist111/TomatoEnergy/blob/main/Tariff%20Automation
 * **Tomato Dashboard**: Full dashboard YAML for monitoring usage and costs https://github.com/ITSpecialist111/TomatoEnergy/blob/main/Tomato%20Dashboard 
 * **Charge Based on Bayesian Drop Rate**: Automates charging logic for EVs or house batteries  https://github.com/ITSpecialist111/TomatoEnergy/blob/main/Charge%20Based%20on%20Bayesian%20Drop%20Rate
+https://github.com/ITSpecialist111/TomatoEnergy/blob/main/Stop%20charge%20based%20on%20Bayesian%20drop%20rate
 
 ## Step-by-Step Setup
 
