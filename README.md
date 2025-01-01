@@ -25,10 +25,10 @@ This repository provides a step-by-step guide for setting up a custom Electricit
 
 This repository contains the following files:
 
-* **Configuration YAML**: Includes sensors for energy usage, costs, and tariffs
-* **Tariff Automation**: Automates tariff switching based on the time of day
-* **Tomato Dashboard**: Full dashboard YAML for monitoring usage and costs
-* **Charge Based on Bayesian Drop Rate**: Automates charging logic for EVs or house batteries
+* **Configuration YAML**: Includes sensors for energy usage, costs, and tariffs  https://github.com/ITSpecialist111/TomatoEnergy/blob/main/Configuration%20YAML 
+* **Tariff Automation**: Automates tariff switching based on the time of day  https://github.com/ITSpecialist111/TomatoEnergy/blob/main/Tariff%20Automation
+* **Tomato Dashboard**: Full dashboard YAML for monitoring usage and costs https://github.com/ITSpecialist111/TomatoEnergy/blob/main/Tomato%20Dashboard 
+* **Charge Based on Bayesian Drop Rate**: Automates charging logic for EVs or house batteries  https://github.com/ITSpecialist111/TomatoEnergy/blob/main/Charge%20Based%20on%20Bayesian%20Drop%20Rate
 
 ## Step-by-Step Setup
 
