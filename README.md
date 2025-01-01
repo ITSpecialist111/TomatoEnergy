@@ -1,42 +1,60 @@
-# Step-by-Step Guide to Setting Up a Custom Tomato Energy Monitoring Dashboard in Home Assistant
+# TomatoEnergy Dashboard for Home Assistant
 
-## Project Overview
-Welcome to the TomatoEnergy Dashboard project! This guide provides step-by-step instructions for setting up a custom Electricity Monitoring Dashboard in Home Assistant. The focus is on monitoring Tomato Energy's fixed tariffs, optimizing energy usage, and automating dynamic tariff changes.
+This repository provides a step-by-step guide for setting up a custom Electricity Monitoring Dashboard in Home Assistant. It is tailored for users of Tomato Energy who want to monitor their energy usage, costs, and tariffs without relying on APIs.
 
-## Project Goals
-* **Real-Time Monitoring**: Track grid consumption with a CT clamp sensor (e.g., sensor.modbus_grid_consumption)
-* **Cost Breakdown**: Visualize energy usage and associated costs per tariff
-* **Dynamic Charging**: Automate EV and battery charging based on time and tariffs
-* **Beginner-Friendly**: No APIs are required—just copy and paste YAML into Home Assistant
+## Goals of the Project
 
-## How to Use This Repository
-This repository provides individual YAML files for configuration. You can copy the required sections into your Home Assistant setup.
+* **📊 Real-Time Monitoring**: Track grid consumption with a CT clamp sensor (e.g., sensor.modbus_grid_consumption)
+* **💸 Cost Breakdown**: Visualize energy usage and associated costs per tariff
+* **🔋 Dynamic Charging**: Automate EV and battery charging based on time and Bayesian analysis
+* **🏠 Beginner-Friendly**: Designed for users with no programming experience—just copy and paste YAML into Home Assistant
 
-### Files Overview
-* **Configuration YAML**: All sensor configurations
-* **Tariff Automation**: Automates tariff switching based on time
-* **Tomato Dashboard**: Complete dashboard YAML for monitoring
-* **Charge Based on Bayesian Drop Rate**: Automates EV or battery charging
+## Table of Contents
+
+* Overview of Files
+* Step-by-Step Setup
+* Create Helpers
+* Add Sensors
+* Set Up Automations
+* Configure the Dashboard
+* Set Up Bayesian Charging Automation
+* Contributing
+* License
+
+## Overview of Files
+
+This repository contains the following files:
+
+* **Configuration YAML**: Includes sensors for energy usage, costs, and tariffs
+* **Tariff Automation**: Automates tariff switching based on the time of day
+* **Tomato Dashboard**: Full dashboard YAML for monitoring usage and costs
+* **Charge Based on Bayesian Drop Rate**: Automates charging logic for EVs or house batteries
 
 ## Step-by-Step Setup
 
-### Add Helpers in Home Assistant
-1. Navigate to Settings > Devices & Services > Helpers
-2. Create a Utility Meter helper:
-   * Source Entity: sensor.modbus_grid_consumption_kwh
+Follow these steps to set up the TomatoEnergy Dashboard.
+
+### 1. Create Helpers
+
+Helpers are used to organize energy usage into specific time-based tariffs.
+
+1. Go to Settings > Devices & Services > Helpers in Home Assistant
+2. Create a Utility Meter helper with the following configuration:
+   * Source Entity: sensor.modbus_grid_consumption_kwh   (What ever sensor or CT Clamp you want to reference here that can see meter usage)
    * Cycle: Daily
    * Tariffs:
      * Off-Peak
      * Drop Rate
      * Peak
-3. Repeat this process for each tariff
+3. Repeat this process for all tariffs
 
-### Add Sensors
-Copy the relevant YAML from the Configuration YAML file into your configuration.yaml.
+### 2. Add Sensors
 
-#### Example Sensors
+Add the following YAML code to your configuration.yaml. These sensors calculate energy usage, costs, and tariffs.
 
-##### ModBus Integration Sensor
+#### ModBus Integration Sensor
+Converts power usage from kW to kWh. ONLY IF YOU DON'T ALREADY HAVE A SENSOR THAT'S IN kWH. I didn't, the sensor was in kW, so I needed to do a conversion. You may want to skip this step.
+
 ```yaml
 sensor:
   - platform: integration
@@ -45,7 +63,9 @@ sensor:
     round: 3
 ```
 
-##### Projected Daily Cost
+#### Projected Daily Cost Sensor
+Estimates daily electricity costs based on current usage.
+
 ```yaml
 template:
   - sensor:
@@ -61,7 +81,9 @@ template:
           {% endif %}
 ```
 
-##### Current Electricity Rate
+#### Current Electricity Rate Sensor
+Determines the current tariff rate dynamically based on the time.
+
 ```yaml
 template:
   - sensor:
@@ -75,17 +97,25 @@ template:
           {% set current_time = now().strftime("%H:%M") %}
 
           {% if "00:00" <= current_time < "06:00" %}
-            off_peak
+            {{ off_peak_rate }}
           {% elif "09:30" <= current_time < "11:30" %}
-            drop_rate
+            {{ drop_rate }}
           {% elif "22:00" <= current_time < "23:59" %}
-            drop_rate
+            {{ drop_rate }}
           {% else %}
-            peak
+            {{ peak_rate }}
           {% endif %}
 ```
 
-#### Example Automation
+After adding the sensors, restart Home Assistant.
+
+### 3. Set Up Automations
+
+Use automations to dynamically update tariffs. Copy the following YAML into your automations:
+
+#### Tariff Automation
+Switches between tariffs based on the time of day.
+
 ```yaml
 alias: Update Electricity Tariff
 trigger:
@@ -109,21 +139,75 @@ action:
         {% endif %}
 ```
 
-### Dashboard Setup
-The dashboard provides a visual overview of energy usage and costs. Copy the YAML from Tomato Dashboard into your dashboard's Raw Configuration Editor.
+### 4. Configure the Dashboard
 
-#### How to Add a Custom Dashboard
-1. Go to Settings > Dashboards > Edit Dashboard
-2. Select Raw Configuration Editor
-3. Paste the contents of the Tomato Dashboard
-4. Save and reload the dashboard
+The dashboard provides a visual overview of energy usage and costs. To configure the dashboard:
+
+1. Navigate to Settings > Dashboards > Raw Configuration Editor
+2. Copy and paste the YAML from Tomato Dashboard
+3. Save and reload the dashboard
+
+### 5. Set Up Bayesian Charging Automation
+
+This setup uses a Bayesian sensor to determine the optimal times to charge EVs or batteries based on the current tariff and grid load.
+
+#### Bayesian Sensor Configuration
+Add the following YAML to your configuration.yaml:
+
+```yaml
+bayesian:
+  - platform: bayesian
+    name: "Charging Decision"
+    prior: 0.5
+    probability_threshold: 0.9
+    observations:
+      - platform: state
+        entity_id: sensor.current_electricity_rate_tomato
+        to_state: "0.05004"
+        probability: 0.9
+      - platform: state
+        entity_id: sensor.grid_consumption
+        below: 2.0
+        probability: 0.8
+```
+
+#### Bayesian Automation
+Create an automation to start charging when the Bayesian sensor outputs on:
+
+```yaml
+alias: Start EV Charging
+trigger:
+  - platform: state
+    entity_id: binary_sensor.charging_decision
+    to: "on"
+action:
+  - service: switch.turn_on
+    target:
+      entity_id: switch.ev_charger
+```
+
+Create another automation to stop charging when the Bayesian sensor outputs off:
+
+```yaml
+alias: Stop EV Charging
+trigger:
+  - platform: state
+    entity_id: binary_sensor.charging_decision
+    to: "off"
+action:
+  - service: switch.turn_off
+    target:
+      entity_id: switch.ev_charger
+```
 
 ## Contributing
-We welcome contributions! If you have ideas to improve this setup:
+
+We welcome contributions! To contribute:
 
 1. Fork the repository
 2. Make your changes
-3. Open a pull request explaining your updates
+3. Open a pull request with a detailed explanation of your updates
 
 ## License
-This project is licensed under the MIT License.
+
+This project is open-source and available under the MIT License.
