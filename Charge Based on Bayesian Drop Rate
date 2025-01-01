@@ -1,0 +1,33 @@
+alias: Charge Home Battery Based on Drop Rate Bayesian Sensor
+description: ""
+triggers:
+  - entity_id: binary_sensor.charge_home_battery
+    to: "on"
+    trigger: state
+conditions:
+  - condition: and
+    conditions:
+      - condition: numeric_state
+        entity_id: sensor.battery_soc
+        below: 80
+      - condition: time
+        after: "09:29:00"
+        before: "11:01:00"
+actions:
+  - data:
+      inverter: b86d732fe09d1ff3f5472aa5c4582114
+      enable_force_charge: true
+      enable_charge_from_grid: true
+      start: "{{ now().strftime('%H:%M:00') }}"
+      end: "{{ (now() + timedelta(minutes=120)).strftime('%H:%M:00') }}"
+      charge_period: "2"
+    action: foxess_modbus.update_charge_period
+  - data:
+      message: Home battery charging triggered by Bayesian sensor.
+    action: notify.notify
+  - target:
+      entity_id: tts.openai_tts_nova
+    data:
+      message: Charging the home battery now based on the Bayesian decision.
+    action: tts.speak
+mode: single
