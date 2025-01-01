@@ -1,4 +1,4 @@
-# Step-by-Step Guide to Setting Up a Custom Electricity Monitoring Dashboard in Home Assistant
+# Step-by-Step Guide to Setting Up a Custom Tomato Energy Monitoring Dashboard in Home Assistant
 
 ## Project Overview
 Welcome to the TomatoEnergy Dashboard project! This guide provides step-by-step instructions for setting up a custom Electricity Monitoring Dashboard in Home Assistant. The focus is on monitoring Tomato Energy's fixed tariffs, optimizing energy usage, and automating dynamic tariff changes.
