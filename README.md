@@ -144,6 +144,8 @@ action:
 
 The dashboard provides a visual overview of energy usage and costs. To configure the dashboard:
 
+Note: You'll need ApexCharts, Mushroom cards installed from HACs.
+
 1. Navigate to Settings > Dashboards > Raw Configuration Editor
 2. Copy and paste the YAML from Tomato Dashboard
 3. Save and reload the dashboard
