@@ -47,7 +47,7 @@ Helpers are used to organize energy usage into specific time-based tariffs.
      * Off-Peak
      * Drop Rate
      * Peak
-3. Repeat this process for all tariffs
+   
 
 ### 2. Add Sensors
 
